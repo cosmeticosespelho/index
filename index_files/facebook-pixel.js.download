@@ -1,0 +1,1090 @@
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  Declare variable
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+var rootlinkFBPixel = "https://apps.omegatheme.com/facebook-pixel";
+
+shop = Shopify.shop;
+if (typeof __st.pageurl != "undefined") {
+  var pageURL = "https://" + __st.pageurl;
+} else {
+  var pageURL = window.location.href;
+}
+if (pageURL.indexOf("&")) {
+  pageURL = pageURL.split("&")[0];
+}
+var otListAllCustomEvents = [];
+var otListAllCustomAddToCart = [];
+var otListAllCustomCheckout = [];
+var otListAllCustomLead = [];
+var isCustomEventPage = ot_getUrlParam("otCustomEvent");
+var conditionIncludeFileEventSetup = sessionStorage.getItem(
+  "OT_FACEBOOK_EVENT_SETUP"
+);
+var currency = Shopify.currency.active;
+var cart_url = "//" + window.location.hostname + "/cart.json";
+var itemInCart;
+var otFBElementButtonAddToCart =
+  ".ProductForm__AddToCart,#teeAtcButton,#new-form-atc,.single_add_to_cart_button,#AddToCartForm button,.product__form button.add-to-cart, #AddToCart-product-template,.product-form__cart-submit,[name^='add']";
+var otFBElementButtonCheckout =
+  '.bettercart_checkout,[name^="checkout"],.shopify-payment-button__button,.btn-checkout,a.fbq-checkout,.checkout_btn,.OTCheckout,.OTCheckout span,#cart .action_button.right';
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  End declare variable
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  Base code facebook pixel
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+(function (window, document) {
+  if (window.otfbq) return;
+  window.otfbq = function () {
+    if (arguments.length > 0) {
+      var pixelId, trackType, contentObj, eventID;
+      if (typeof arguments[0] == "string") pixelId = arguments[0];
+      if (typeof arguments[1] == "string") trackType = arguments[1];
+      if (typeof arguments[2] == "object") contentObj = arguments[2];
+      if (typeof arguments[3] != "undefined") eventID = arguments[3];
+      if (typeof arguments[4] != "undefined") nameCustomEvent = arguments[4];
+      if (eventID == "" || typeof eventID == "undefined") {
+        eventID = new Date().getTime() + getRandomInt(1, 100000);
+      }
+      var params = [];
+      if (
+        typeof pixelId === "string" &&
+        pixelId.replace(/\s+/gi, "") != "" &&
+        typeof trackType === "string" &&
+        trackType.replace(/\s+/gi, "")
+      ) {
+        params.push("id=" + encodeURIComponent(pixelId));
+        switch (trackType) {
+          case "PageView":
+          case "ViewContent":
+          case "Search":
+          case "AddToCart":
+          case "InitiateCheckout":
+          case "AddPaymentInfo":
+          case "Lead":
+          case "CompleteRegistration":
+          case "Purchase":
+          case "AddToWishlist":
+            params.push("ev=" + encodeURIComponent(trackType));
+            break;
+          case "trackCustom":
+            params.push("ev=" + encodeURIComponent(nameCustomEvent));
+            break;
+          default:
+            return;
+        }
+
+        params.push("dl=" + encodeURIComponent(document.location.href));
+        if (document.referrer)
+          params.push("rl=" + encodeURIComponent(document.referrer));
+        params.push("if=false");
+        params.push("ts=" + new Date().getTime());
+        if (typeof contentObj == "object") {
+          for (var u in contentObj) {
+            if (
+              typeof contentObj[u] == "object" &&
+              contentObj[u] instanceof Array
+            ) {
+              if (contentObj[u].length > 0) {
+                for (var y = 0; y < contentObj[u].length; y++) {
+                  contentObj[u][y] = (contentObj[u][y] + "")
+                    .replace(/^\s+|\s+$/gi, "")
+                    .replace(/\s+/gi, " ")
+                    .replace(/,/gi, "§");
+                }
+                params.push(
+                  "cd[" +
+                    u +
+                    "]=" +
+                    encodeURIComponent(
+                      contentObj[u]
+                        .join(",")
+                        .replace(/^/gi, "['")
+                        .replace(/$/gi, "']")
+                        .replace(/,/gi, "','")
+                        .replace(/§/gi, ",")
+                    )
+                );
+              }
+            } else {
+              params.push("cd[" + u + "]=" + encodeURIComponent(contentObj[u]));
+            }
+          }
+        }
+        params.push("v=" + encodeURIComponent("2.7.19"));
+        var imgId = new Date().getTime();
+        var img = document.createElement("img");
+        (img.id = "fb_" + imgId),
+          (img.src =
+            "https://www.facebook.com/tr/?eid=" +
+            eventID +
+            "&" +
+            params.join("&")),
+          (img.width = 1),
+          (img.height = 1),
+          (img.style = "display:none;");
+        document.body.appendChild(img);
+        window.setTimeout(function () {
+          var t = document.getElementById("fb_" + imgId);
+          t.parentElement.removeChild(t);
+        }, 5000);
+      }
+    }
+  };
+})(window, document);
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  End base code facebook pixel
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  Include Jquery
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+if (typeof $ == "undefined") {
+  javascript: (function (e, s) {
+    e.src = s;
+    e.onload = function () {
+      $ = jQuery.noConflict();
+      let versionTemp = new Date().getTime();
+      includeSetUpEventPage(
+        versionTemp,
+        conditionIncludeFileEventSetup,
+        isCustomEventPage
+      );
+      if (typeof window.otFbPixelCheckExistFile === "undefined") {
+        otFacebookPixelInit($);
+        window.otFbPixelCheckExistFile = false;
+      }
+    };
+    document.head.appendChild(e);
+  })(
+    document.createElement("script"),
+    "https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+  );
+} else {
+  let versionTemp = new Date().getTime();
+  includeSetUpEventPage(
+    versionTemp,
+    conditionIncludeFileEventSetup,
+    isCustomEventPage
+  );
+  if (typeof window.otFbPixelCheckExistFile === "undefined") {
+    otFacebookPixelInit($);
+    window.otFbPixelCheckExistFile = false;
+  }
+}
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  End include Jquery
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  Function check app Expire
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+async function otFacebookPixelInit($) {
+  let FbPixelCheckExpireApp = await otFacebookPixelCheckExpireApp(
+    $,
+    rootlinkFBPixel,
+    shop
+  );
+  let FbPixelSettings = FbPixelCheckExpireApp.settings;
+  FbPixelCheckExpireApp.list_all_custom_events.forEach((element) => {
+    if (element.event_type == 0) {
+      otListAllCustomEvents.push(element);
+    }
+    if (element.event_type == 1) {
+      otListAllCustomLead.push(element);
+    }
+    if (element.event_type == 2) {
+      otListAllCustomAddToCart.push(element);
+    }
+    if (element.event_type == 3) {
+      otListAllCustomCheckout.push(element);
+    }
+  });
+
+  if (
+    FbPixelCheckExpireApp.checkExpire == false &&
+    FbPixelCheckExpireApp.enableApp == "1"
+  ) {
+    let ot_time_delay = 0;
+    // if (FbPixelSettings.isDelayTrack == "1") {
+    //   ot_time_delay = parseInt(FbPixelSettings.delayTimeTrack) * 1000;
+    // }
+    setTimeout(() => {
+      otMultiFacebookPixel($, FbPixelSettings); //startApp
+    }, ot_time_delay);
+  }
+  detectShopifyPixel();
+}
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  End function check app Expire
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  Function Start APP
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+async function otMultiFacebookPixel($, FbPixelSettings) {
+  if (typeof arrayFBPixelTrack != "undefined" && arrayFBPixelTrack.length > 0) {
+    // trackEventTimeOnPage(arrayFBPixelTrack, FbPixelSettings); //track Time on page events
+    detectCustomEvents(arrayFBPixelTrack, otListAllCustomEvents); //track Custom events
+    detectLeadEvents(arrayFBPixelTrack, otListAllCustomLead); //track Lead events
+    let event_id = generateEventID(36);
+    arrayFBPixelTrack.forEach(function (element, index) {
+      otfbq(`${element}`, "PageView", "", event_id);
+    });
+    if (FbPixelSettings.capi_track_pageview == "1") {
+      trackEventFBConversionAPI($, {
+        action: "PageView",
+        event_id: event_id,
+        event_source_url: pageURL,
+        pixels: arrayFBPixelTrack,
+        shop: Shopify.shop,
+      });
+    }
+    if (pageURL.indexOf("/products/") > -1) {
+      if (pageURL.indexOf("?") > -1) {
+        var product_url = pageURL.split("?");
+        product_url = product_url[0] + ".json";
+      } else {
+        var product_url = pageURL + ".json";
+      }
+      var product = await otGetInfoProductByLink(product_url, $);
+      if (product.title.indexOf("'") > -1) {
+        product.title = product.title.replace(/'/g, "");
+      }
+      let event_id = generateEventID(36);
+      let variant_id = ot_getUrlParam("variant");
+      arrayFBPixelTrack.forEach(function (element, index) {
+        otfbq(
+          `${element}`,
+          "ViewContent",
+          {
+            content_ids: [
+              variant_id !== null ? variant_id : meta.product.variants[0].id,
+            ],
+            content_type: "product",
+            value: product.variants[0].price,
+            content_name: product.title,
+            currency: Shopify.currency.active,
+          },
+          event_id
+        );
+      });
+
+      if (FbPixelSettings.capi_track_viewcontent == "1") {
+        trackEventFBConversionAPI($, {
+          action: "ViewContent",
+          event_id: event_id,
+          event_source_url: pageURL,
+          content_ids: [
+            variant_id !== null ? variant_id : meta.product.variants[0].id,
+          ],
+          content_type: "product",
+          value: product.variants[0].price,
+          content_name: product.title,
+          currency: Shopify.currency.active,
+          pixels: arrayFBPixelTrack,
+          shop: Shopify.shop,
+        });
+      }
+    }
+    if (pageURL.indexOf("/search") > -1) {
+      let event_id = generateEventID(36);
+      arrayFBPixelTrack.forEach(function (element, index) {
+        otfbq(`${element}`, "Search", "", event_id);
+      });
+      if (document.querySelector('meta[property="og:url"]') != null) {
+        var event_source_url = document
+          .querySelector('meta[property="og:url"]')
+          .getAttribute("content");
+      } else {
+        var event_source_url = window.location.href;
+      }
+
+      if (FbPixelSettings.capi_track_search == "1") {
+        trackEventFBConversionAPI($, {
+          action: "Search",
+          event_id: event_id,
+          event_source_url: pageURL,
+          pixels: arrayFBPixelTrack,
+          shop: Shopify.shop,
+        });
+      }
+    }
+    if (pageURL.indexOf("/cart") > -1) {
+      getItemOnCartPageFB($, function (cart) {
+        itemInCart = cart;
+        let items = cart.items;
+        let lastItem = items[items.length - 1];
+        let totalItemCart = localStorage.getItem("OTPX");
+        let checkAddedOnProductPage = localStorage.getItem("OTPXADDED");
+        if (
+          (totalItemCart != cart.item_count || totalItemCart == null) &&
+          checkAddedOnProductPage != 1
+        ) {
+          localStorage.setItem("OTPXADDED", 0);
+          localStorage.setItem("OTPX", cart.item_count);
+          let event_id = generateEventID(36);
+          arrayFBPixelTrack.forEach(function (element, index) {
+            otfbq(
+              `${element}`,
+              "AddToCart",
+              {
+                content_ids: lastItem["variant_id"],
+                content_type: "product",
+                value: parseInt(cart.total_price) / 100,
+                content_name: lastItem["product_title"],
+                currency: Shopify.currency.active,
+              },
+              event_id
+            );
+          });
+          if (FbPixelSettings.capi_track_addtocart == "1") {
+            trackEventFBConversionAPI($, {
+              action: "AddToCart",
+              event_id: event_id,
+              event_source_url: pageURL,
+              content_ids: lastItem["variant_id"],
+              content_type: "product",
+              value: parseInt(cart.total_price) / 100,
+              content_name: lastItem["product_title"],
+              currency: Shopify.currency.active,
+              pixels: arrayFBPixelTrack,
+              shop: Shopify.shop,
+            });
+          }
+        }
+      });
+    }
+    document.addEventListener("click", function (event) {
+      if (
+        otEventClickIsMatchesDom(
+          event,
+          otFBElementButtonAddToCart,
+          otListAllCustomAddToCart
+        )
+      ) {
+        getItemOnCartPageFB($, function (cart) {
+          otTrackATC(arrayFBPixelTrack, FbPixelSettings, cart);
+        });
+      }
+      //track IC
+      if (
+        otEventClickIsMatchesDom(
+          event,
+          otFBElementButtonCheckout,
+          otListAllCustomCheckout
+        )
+      ) {
+        getItemOnCartPageFB($, function (cart) {
+          otTrackIC(arrayFBPixelTrack, FbPixelSettings, cart);
+        });
+      }
+    });
+  }
+
+  if (Shopify.Checkout && Shopify.Checkout.page == "thank_you") {
+    let checkDuplicatePurchase = localStorage.getItem(
+      "otfb_" + Shopify.checkout.order_id
+    );
+    if (checkDuplicatePurchase == null) {
+      var productIds = [];
+      var productNames = [];
+      var quantity = 0;
+      Shopify.checkout.line_items.forEach(function (item, index) {
+        quantity = quantity + item.quantity;
+        if (item.variant_title != "") {
+          var prod_name = item.title + " - " + item.variant_title;
+        } else {
+          var prod_name = item.title;
+        }
+        productNames.push(prod_name);
+        productIds.push(item.product_id);
+      });
+      addEventPurchaseInThankYouPage($, productIds, quantity, FbPixelSettings);
+    }
+  }
+  if (
+    typeof Shopify.Checkout != "undefined" &&
+    typeof Shopify.Checkout.isOrderStatusPage != "undefined"
+  ) {
+    trackOrderStatusPage($);
+  }
+}
+
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+// |  End function Start APP
+// =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function otTrackIC(arrayFBPixelTrack, FbPixelSettings, itemInCart) {
+  if (
+    typeof itemInCart != "undefined" &&
+    typeof itemInCart.items != "undefined"
+  ) {
+    var cart = itemInCart;
+    if (cart.items.length > 0) {
+      let content_ids = [];
+      let content_name = [];
+      $.each(cart.items, function (index, value) {
+        content_ids.push(value.variant_id);
+        content_name.push(value.product_title);
+        if (index == cart.items.length - 1) {
+          let event_id = generateEventID(36);
+
+          arrayFBPixelTrack.forEach(function (element, index) {
+            otfbq(
+              `${element}`,
+              "InitiateCheckout",
+              {
+                content_type: "product",
+                content_ids: content_ids,
+                currency: Shopify.currency.active,
+                value: parseFloat(cart.total_price) / 100,
+                num_items: cart.item_count,
+                content_name: content_name,
+              },
+              event_id
+            );
+          });
+          if (FbPixelSettings.capi_track_checkout == "1") {
+            trackEventFBConversionAPI($, {
+              action: "InitiateCheckout",
+              event_id: event_id,
+              event_source_url: pageURL,
+              content_ids: content_ids,
+              content_type: "product",
+              num_items: cart.item_count,
+              value: parseFloat(cart.total_price) / 100,
+              content_name: content_name,
+              currency: Shopify.currency.active,
+              pixels: arrayFBPixelTrack,
+              shop: Shopify.shop,
+            });
+          }
+        }
+      });
+    }
+  } else {
+    $.ajax({
+      type: "GET",
+      url: "/cart.js",
+      dataType: "json",
+    })
+      .done((cart) => {
+        if (cart.items.length > 0) {
+          let content_ids = [];
+          let content_name = [];
+          $.each(cart.items, function (index, value) {
+            content_ids.push(value.variant_id);
+            content_name.push(value.product_title);
+            if (index == cart.items.length - 1) {
+              let event_id = generateEventID(36);
+              arrayFBPixelTrack.forEach(function (element, index) {
+                otfbq(
+                  `${element}`,
+                  "InitiateCheckout",
+                  {
+                    content_type: "product",
+                    content_ids: content_ids,
+                    currency: Shopify.currency.active,
+                    value: parseFloat(cart.total_price) / 100,
+                    num_items: cart.item_count,
+                    content_name: content_name,
+                  },
+                  event_id
+                );
+              });
+              if (FbPixelSettings.capi_track_checkout == "1") {
+                trackEventFBConversionAPI($, {
+                  action: "InitiateCheckout",
+                  event_id: event_id,
+                  event_source_url: pageURL,
+                  content_ids: content_ids,
+                  content_type: "product",
+                  num_items: cart.item_count,
+                  value: parseFloat(cart.total_price) / 100,
+                  content_name: meta.product.variants[0]["name"],
+                  currency: Shopify.currency.active,
+                  pixels: arrayFBPixelTrack,
+                  shop: Shopify.shop,
+                });
+              }
+            }
+          });
+        } else {
+          let event_id = generateEventID(36);
+          arrayFBPixelTrack.forEach(function (element, index) {
+            otfbq(`${element}`, "InitiateCheckout", {}, event_id);
+          });
+        }
+      })
+      .fail(function (jqXHR, textStatus) {
+        let event_id = generateEventID(36);
+        arrayFBPixelTrack.forEach(function (element, index) {
+          otfbq(`${element}`, "InitiateCheckout", {}, event_id);
+        });
+      });
+  }
+}
+async function trackOrderStatusPage($) {
+  var pixels = await otGetAllPixel($);
+  var event_id = generateEventID(36);
+  if (pixels.length > 0) {
+    pixels.forEach(function (element, index) {
+      otfbq(`${element}`, "PageView", "", event_id);
+    });
+  }
+}
+function ABTestOtGetAllPixel($, productIds) {
+  return new Promise((resolve) => {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        resolve(JSON.parse(xhttp.responseText));
+      }
+    };
+    xhttp.open(
+      "GET",
+      `${rootlinkFBPixel}/client/facebook-pixel.php?shop=${shop}&action=ABTestOtGetAllPixel&productIDs=${productIds}`,
+      true
+    );
+    xhttp.send();
+  });
+}
+function getItemOnCartPageFB($, callback) {
+  $.ajax({
+    type: "GET",
+    url: "/cart.js",
+    dataType: "json",
+  }).done((cart) => {
+    if (typeof callback == "function") {
+      callback(cart);
+    }
+  });
+}
+
+function otFacebookPixelCheckExpireApp($, rootlinkFBPixel, shop) {
+  "use strict";
+  return new Promise((resolve) => {
+    $.ajax({
+      type: "GET",
+      data: { action: "checkExpire", shop: shop },
+      url: `${rootlinkFBPixel}/client/facebook-pixel.php`,
+      dataType: "json",
+    }).done((result) => {
+      if (typeof result == "string") {
+        result = JSON.parse(result);
+      }
+      resolve(result);
+    });
+  });
+}
+async function addEventPurchaseInThankYouPage(
+  $,
+  productIds,
+  quantity,
+  FbPixelSettings
+) {
+  localStorage.setItem(
+    "otfb_" + Shopify.checkout.order_id,
+    Shopify.checkout.order_id
+  );
+  var pixels = await ABTestOtGetAllPixel($, productIds);
+  var event_id = generateEventID(36);
+  var order_value;
+  if (pixels.length > 0) {
+    if (FbPixelSettings.use_multi_currency == 1) {
+      Shopify.checkout.total_price =
+        typeof Shopify.checkout.total_price_set.shop_money.amount != "undefined"
+          ? Shopify.checkout.total_price_set.shop_money.amount
+          : Shopify.checkout.subtotal_price;
+    }
+    if (FbPixelSettings.include_shippping_cost == 1) {
+      order_value = Shopify.checkout.total_price;
+    } else {
+      order_value = Shopify.checkout.subtotal_price;
+    }
+    pixels.forEach(function (element, index) {
+      let event_id = generateEventID(36);
+      otfbq(`${element.pixel_id}`, "PageView", "", event_id);
+      otfbq(
+        `${element.pixel_id}`,
+        "Purchase",
+        {
+          currency: Shopify.currency.active,
+          value: order_value,
+          content_ids: productIds,
+          content_type: "product",
+          num_items: quantity,
+        },
+        Shopify.checkout.order_id
+      );
+    });
+    Shopify.checkout.email =
+      typeof Shopify.checkout.email == "undefined"
+        ? Shopify.checkout.email
+        : "";
+    Shopify.checkout.phone =
+      typeof Shopify.checkout.phone == "undefined"
+        ? Shopify.checkout.phone
+        : "";
+    var city =
+      Shopify.checkout.shipping_address != null &&
+      typeof Shopify.checkout.shipping_address.city != "undefined" &&
+      FbPixelSettings.group_accept_information_customer.isCity == true
+        ? Shopify.checkout.shipping_address.city
+        : "";
+    var zip =
+      Shopify.checkout.shipping_address != null &&
+      typeof Shopify.checkout.shipping_address.zip != "undefined" &&
+      FbPixelSettings.group_accept_information_customer.isZipCode == true
+        ? Shopify.checkout.shipping_address.zip
+        : "";
+    var country =
+      Shopify.checkout.shipping_address != null &&
+      typeof Shopify.checkout.shipping_address.country != "undefined" &&
+      FbPixelSettings.group_accept_information_customer.isCountry == true
+        ? Shopify.checkout.shipping_address.country
+        : "";
+    var first_name =
+      Shopify.checkout.shipping_address != null &&
+      typeof Shopify.checkout.shipping_address.first_name != "undefined" &&
+      FbPixelSettings.group_accept_information_customer.isFirstName == true
+        ? Shopify.checkout.shipping_address.first_name
+        : "";
+    var last_name =
+      Shopify.checkout.shipping_address != null &&
+      typeof Shopify.checkout.shipping_address.last_name != "undefined" &&
+      FbPixelSettings.group_accept_information_customer.isLastName == true
+        ? Shopify.checkout.shipping_address.last_name
+        : "";
+
+    dataPurchase = {
+      action: "Purchase",
+      event_id: Shopify.checkout.order_id,
+      event_source_url: pageURL,
+      content_ids: productIds,
+      content_type: "product",
+      num_items: quantity,
+      value: order_value,
+      currency: Shopify.currency.active,
+      pixels: pixels,
+      external_id:
+        FbPixelSettings.group_accept_information_customer.isExternalID == true
+          ? event_id
+          : "",
+      em: Shopify.checkout.email,
+      ct: city,
+      fbp:
+        FbPixelSettings.group_accept_information_customer.isBrowserIDCookie ==
+        true
+          ? getFbClientId()
+          : "",
+      fbc:
+        FbPixelSettings.group_accept_information_customer.isClickIDCookie ==
+        true
+          ? getFbClientId()
+          : "",
+      ph: Shopify.checkout.phone,
+      country: country,
+      first_name: first_name,
+      last_name: last_name,
+      zp: zip,
+      timezone:
+        typeof FbPixelSettings.date_timezone_offset != "undefined"
+          ? FbPixelSettings.date_timezone_offset
+          : "UTC",
+      subscription_id:
+        FbPixelSettings.group_accept_information_customer.isSubscriptionID ==
+        false
+          ? Shopify.checkout.order_id
+          : "",
+      shop: Shopify.shop,
+    };
+
+    if (FbPixelSettings.capi_track_purchase == "1") {
+      trackEventFBConversionAPI($, dataPurchase);
+    }
+  }
+}
+function getFbClientId() {
+  let result = /_fbp=(fb\.1\.\d+\.\d+)/.exec(window.document.cookie);
+  if (!(result && result[1])) {
+    return null;
+  }
+  return result[1];
+}
+
+function otGetAllPixel($) {
+  return new Promise((resolve) => {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        resolve(JSON.parse(xhttp.responseText));
+      }
+    };
+    xhttp.open(
+      "GET",
+      `${rootlinkFBPixel}/client/facebook-pixel.php?shop=${shop}&action=getAllPixel`,
+      true
+    );
+    xhttp.send();
+  });
+}
+function otGetInfoProductByLink(URL, $) {
+  return new Promise((resolve) => {
+    $.ajax({
+      url: URL,
+      dataType: "jsonp",
+      header: { "Access-Control-Allow-Origin": "*" },
+      success: function (responseData) {
+        if (typeof responseData == "string") {
+          responseData = JSON.parse(responseData);
+        }
+        resolve(responseData.product);
+      },
+    });
+  });
+}
+Shopify.formatMoney = function (cents, format) {
+  if (typeof cents === "string") {
+    cents = cents.replace(".", "");
+  }
+  var value = "";
+  var placeholderRegex = /\{\{\s*(\w+)\s*\}\}/;
+  var formatString = format || this.money_format;
+
+  function defaultOption(opt, def) {
+    return typeof opt == "undefined" ? def : opt;
+  }
+
+  function formatWithDelimiters(number, precision, thousands, decimal) {
+    precision = defaultOption(precision, 2);
+    thousands = defaultOption(thousands, ",");
+    decimal = defaultOption(decimal, ".");
+
+    if (isNaN(number) || number == null) {
+      return 0;
+    }
+
+    number = (number / 100.0).toFixed(precision);
+
+    var parts = number.split("."),
+      dollars = parts[0].replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1" + thousands),
+      cents = parts[1] ? decimal + parts[1] : "";
+
+    return dollars + cents;
+  }
+  switch (formatString.match(placeholderRegex)[1]) {
+    case "amount":
+      value = formatWithDelimiters(cents, 2);
+      break;
+    case "amount_no_decimals":
+      value = formatWithDelimiters(cents, 0);
+      break;
+    case "amount_with_comma_separator":
+      value = formatWithDelimiters(cents, 2, ".", ",");
+      break;
+    case "amount_no_decimals_with_comma_separator":
+      value = formatWithDelimiters(cents, 0, ".", ",");
+      break;
+  }
+  return formatString.replace(placeholderRegex, value);
+};
+
+function trackEventFBConversionAPI($, data) {
+  $.ajax({
+    url: `${rootlinkFBPixel}/client/facebook-conversion-api.php`,
+    type: "POST",
+    dataType: "json",
+    data: data,
+  })
+    .done((response) => {})
+    .fail((error) => {
+      console.log(error);
+    });
+}
+
+function detectShopifyPixel() {
+  if (
+    typeof trekkie.integrations != "undefined" &&
+    typeof trekkie.integrations[1] != "undefined"
+  ) {
+    var ShopifyPixelID = trekkie.integrations[1]["options"]["pixelIds"];
+  } else {
+    var ShopifyPixelID = "";
+  }
+  var xhttp = new XMLHttpRequest();
+  xhttp.open(
+    "GET",
+    `${rootlinkFBPixel}/client/facebook-pixel.php?shop=${shop}&action=saveShopifyPixel&ShopifyPixelID=${ShopifyPixelID}`,
+    true
+  );
+  xhttp.send();
+}
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+function generateEventID(length) {
+  var a =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split("");
+  var b = [];
+  for (var i = 0; i < length; i++) {
+    var j = (Math.random() * (a.length - 1)).toFixed(0);
+    b[i] = a[j];
+  }
+  return b.join("");
+}
+
+function trackEventTimeOnPage(arrayFBPixelTrack, FbPixelSettings) {
+  if (FbPixelSettings.isTimeOnPage == "1") {
+    let timeInterval = parseInt(FbPixelSettings.intervalTrackTimeOnPage) * 1000;
+    let timeOnPage = timeInterval;
+    setInterval(() => {
+      let eventID = new Date().getTime() + getRandomInt(1, 100000) + timeOnPage;
+      arrayFBPixelTrack.forEach(function (element) {
+        window.otfbq(
+          `${element}`,
+          "trackCustom",
+          { time: timeOnPage },
+          eventID,
+          "TimeOnPage"
+        );
+      });
+      trackEventFBConversionAPI($, {
+        action: "TimeOnPage",
+        event_id: eventID,
+        event_source_url: pageURL,
+        pixels: arrayFBPixelTrack,
+        shop: Shopify.shop,
+        timeOnPage: timeOnPage,
+      });
+      timeOnPage += timeInterval;
+    }, timeInterval);
+  }
+}
+
+function detectCustomEvents(arrayFBPixelTrack, otListAllCustomEvents) {
+  if (otListAllCustomEvents.length > 0) {
+    otListAllCustomEvents.forEach(function (dom) {
+      document.addEventListener("click", function (event) {
+        if (
+          dom.button_fires_by_class_id !== "" &&
+          event.target.textContent.match(dom.button_fires_by_text) &&
+          event.target.matches(dom.button_fires_by_class_id)
+        ) {
+          console.log(
+            "match class,id: " +
+              dom.button_fires_by_class_id +
+              " and text: " +
+              dom.button_fires_by_text
+          );
+          trackCustomEvent(arrayFBPixelTrack, dom.event_name);
+        } else if (
+          dom.button_fires_by_class_id == "" &&
+          event.target?.classList?.length == 0 &&
+          event.target.textContent.match(dom.button_fires_by_text)
+        ) {
+          console.log("match text: " + dom.button_fires_by_text);
+          trackCustomEvent(arrayFBPixelTrack, dom.event_name);
+        }
+      });
+    });
+  }
+}
+
+function detectLeadEvents(arrayFBPixelTrack, otListAllCustomLead) {
+  if (otListAllCustomLead.length > 0) {
+    otListAllCustomLead.forEach(function (dom) {
+      document.addEventListener("click", function (event) {
+        if (
+          dom.button_fires_by_class_id !== "" &&
+          event.target.textContent.match(dom.button_fires_by_text) &&
+          event.target.matches(dom.button_fires_by_class_id)
+        ) {
+          console.log(
+            "match class,id: " +
+              dom.button_fires_by_class_id +
+              " and text: " +
+              dom.button_fires_by_text
+          );
+          trackLeadEvent(arrayFBPixelTrack);
+        } else if (
+          dom.button_fires_by_class_id == "" &&
+          event.target?.classList?.length == 0 &&
+          event.target.textContent.match(dom.button_fires_by_text)
+        ) {
+          console.log("match text: " + dom.button_fires_by_text);
+          trackLeadEvent(arrayFBPixelTrack);
+        }
+      });
+    });
+  }
+}
+
+function trackLeadEvent(arrayFBPixelTrack) {
+  let eventID = new Date().getTime() + getRandomInt(1, 100000);
+  arrayFBPixelTrack.forEach(function (element) {
+    otfbq(`${element}`, "Lead", "", eventID);
+  });
+  trackEventFBConversionAPI($, {
+    action: "CustomEvent",
+    event_name: "Lead",
+    event_id: eventID,
+    event_source_url: pageURL,
+    pixels: arrayFBPixelTrack,
+    shop: Shopify.shop,
+  });
+}
+
+function trackCustomEvent(arrayFBPixelTrack, event_name) {
+  let eventID = new Date().getTime() + getRandomInt(1, 100000);
+  arrayFBPixelTrack.forEach(function (element) {
+    window.otfbq(`${element}`, "trackCustom", "", eventID, event_name);
+  });
+  trackEventFBConversionAPI($, {
+    action: "CustomEvent",
+    event_name: event_name,
+    event_id: eventID,
+    event_source_url: pageURL,
+    pixels: arrayFBPixelTrack,
+    shop: Shopify.shop,
+  });
+}
+
+function otTrackATC(arrayFBPixelTrack, FbPixelSettings, itemInCart) {
+  var cart = itemInCart;
+  localStorage.setItem("OTPXADDED", 1);
+  if (cart.items.length > 0) {
+    let lastItem = cart.items[0];
+    let event_id = generateEventID(36);
+
+    arrayFBPixelTrack.forEach(function (element, index) {
+      otfbq(
+        `${element}`,
+        "AddToCart",
+        {
+          content_ids: lastItem["variant_id"],
+          content_type: "product",
+          value: parseInt(cart.total_price) / 100,
+          content_name: lastItem["product_title"],
+          currency: Shopify.currency.active,
+        },
+        event_id
+      );
+    });
+    if (FbPixelSettings.capi_track_addtocart == "1") {
+      trackEventFBConversionAPI($, {
+        action: "AddToCart",
+        event_id: event_id,
+        event_source_url: pageURL,
+        content_ids: lastItem["variant_id"],
+        content_type: "product",
+        value: parseInt(cart.total_price) / 100,
+        content_name: lastItem["product_title"],
+        currency: Shopify.currency.active,
+        pixels: arrayFBPixelTrack,
+        shop: Shopify.shop,
+      });
+    }
+  } else {
+    if (typeof __st.rid != "undefined" && typeof meta.product != "undefined") {
+      let event_id = generateEventID(36);
+      arrayFBPixelTrack.forEach(function (element, index) {
+        otfbq(
+          `${element}`,
+          "AddToCart",
+          {
+            content_ids: __st.rid,
+            content_type: "product",
+            value: parseInt(meta.product.variants[0]["price"]) / 100,
+            content_name: meta.product.variants[0]["name"],
+            currency: Shopify.currency.active,
+          },
+          event_id
+        );
+      });
+      if (FbPixelSettings.capi_track_addtocart == "1") {
+        trackEventFBConversionAPI($, {
+          action: "AddToCart",
+          event_id: event_id,
+          event_source_url: pageURL,
+          content_ids: __st.rid,
+          content_type: "product",
+          value: parseInt(meta.product.variants[0]["price"]) / 100,
+          content_name: meta.product.variants[0]["name"],
+          currency: Shopify.currency.active,
+          pixels: arrayFBPixelTrack,
+          shop: Shopify.shop,
+        });
+      }
+    } else {
+      let event_id = generateEventID(36);
+      arrayFBPixelTrack.forEach(function (element, index) {
+        otfbq(`${element}`, "AddToCart", {}, event_id);
+      });
+    }
+  }
+}
+
+function ot_getUrlParam(paramName) {
+  var match = window.location.search.match(
+    "[?&]" + paramName + "(?:&|$|=([^&]*))"
+  );
+  return match ? (match[1] ? match[1] : "") : null;
+}
+
+function includeSetUpEventPage(
+  version,
+  conditionIncludeFileEventSetup,
+  isCustomEventPage
+) {
+  //Check enable file customEvent
+  if (conditionIncludeFileEventSetup == "show" || isCustomEventPage == "1") {
+    sessionStorage.setItem("OT_FACEBOOK_EVENT_SETUP", "show");
+    $.getScript(`${rootlinkFBPixel}/client/customEvent.js?v=${version}`);
+  }
+}
+
+function otEventClickIsMatchesDom(event, otElementButton, otlistAllCustom) {
+  var result = false;
+  if (event.target.matches(otElementButton)) {
+    return true;
+  }
+  otlistAllCustom.forEach((dom) => {
+    if (
+      dom.button_fires_by_class_id !== "" &&
+      event.target.textContent.match(dom.button_fires_by_text) &&
+      event.target.matches(dom.button_fires_by_class_id)
+    ) {
+      console.log(
+        "match class,id: " +
+          dom.button_fires_by_class_id +
+          " and text: " +
+          dom.button_fires_by_text
+      );
+      result = true;
+      return;
+    } else if (
+      dom.button_fires_by_class_id == "" &&
+      event.target?.classList?.length == 0 &&
+      event.target.textContent.match(dom.button_fires_by_text)
+    ) {
+      console.log("match text: " + dom.button_fires_by_text);
+      result = true;
+      return;
+    }
+  });
+  return result;
+}

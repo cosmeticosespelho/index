@@ -1,0 +1,1 @@
+(this.___PageFlyApp___=this.___PageFlyApp___||[]).push([[39],{727:function(s,a,e){"use strict";e.r(a),a.default="@keyframes pf-pulse{from{transform:scale3d(1,1,1)}50%{transform:scale3d(1.05,1.05,1.05)}to{transform:scale3d(1,1,1)}}.pulse{animation-name:pf-pulse}"}}]);
